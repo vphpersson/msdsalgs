@@ -12,6 +12,5 @@ setup(
         'Programming Language :: Python :: 3.7',
     ],
     packages=['msdsalgs'],
-    py_modules=['ColoredOutput', 'Progressor'],
     python_requires='>=3.7'
 )
