@@ -1,4 +1,4 @@
-from typing import Type, Optional, Union
+from typing import Type, Optional, Union, Callable, Any, List
 from enum import IntFlag
 from re import compile as re_compile, sub as re_sub
 
@@ -65,3 +65,28 @@ def make_mask_class(int_flag_enum_cls: Type[IntFlag], name: Optional[str] = None
     setattr(int_flag_cls, 'from_mask', from_mask)
 
     return int_flag_cls
+
+
+def extract_elements(
+    data: bytes,
+    create_element: Callable[[bytes], Any],
+    get_next_offset: Callable[[Any], int]
+) -> List[Any]:
+
+    if not data:
+        return []
+
+    elements: List[Any] = []
+
+    while True:
+        element: Any = create_element(data)
+        elements.append(element)
+
+        next_offset: int = get_next_offset(element)
+
+        if next_offset == 0:
+            break
+
+        data = data[next_offset:]
+
+    return elements
