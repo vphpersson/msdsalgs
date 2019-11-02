@@ -1,3 +1,4 @@
+from __future__ import annotations
 from typing import Tuple, Optional
 from struct import unpack as struct_unpack, pack as struct_pack
 from enum import Enum
@@ -65,7 +66,7 @@ class SID:
         return self.sub_authorities[-1]
 
     @classmethod
-    def from_string(cls, sid_string: str) -> 'SID':
+    def from_string(cls, sid_string: str) -> SID:
         match = SID_STR_PATTERN.match(sid_string)
         if match is None:
             raise ValueError('Not a valid SID string.')
@@ -80,7 +81,7 @@ class SID:
 
     # TODO: Add another decorator that initiates an instance of `struct.Struct`? Or just refer to one using a property.
     @classmethod
-    def from_bytes(cls, data: bytes) -> 'SID':
+    def from_bytes(cls, data: bytes) -> SID:
         revision_number: int = struct_unpack('<B', data[0:1])[0]
         num_sub_authorities: int = struct_unpack('<B', data[1:2])[0]
 

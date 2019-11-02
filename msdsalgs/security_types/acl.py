@@ -1,8 +1,9 @@
+from __future__ import annotations
 from dataclasses import dataclass
 from typing import Tuple, List
 from struct import unpack as struct_unpack
 
-from ad_data_gatherer.utils.microsoft_structures.ace import ACE
+from .ace import ACE
 
 
 @dataclass
@@ -20,10 +21,12 @@ class ACLPacket:
     _sbz2: int
 
     @classmethod
-    def from_bytes(cls, data: bytes) -> 'ACLPacket':
+    def from_bytes(cls, data: bytes) -> ACLPacket:
 
         # TODO: Revision should also be checked, maybe.
         #   https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-dtyp/20233ed8-a6c6-4097-aafa-dd545ed24428
+
+        # TODO: Use proper exceptions.
 
         sbz1: int = struct_unpack('<B', data[1:2])[0]
         if sbz1 != 0:
@@ -51,7 +54,7 @@ class ACL:
     aces: Tuple[ACE, ...]
 
     @classmethod
-    def from_bytes(cls, data: bytes) -> 'ACL':
+    def from_bytes(cls, data: bytes) -> ACL:
         """
         Construct an ACL from a byte stream.
 

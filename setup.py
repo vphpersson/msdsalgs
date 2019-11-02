@@ -1,8 +1,8 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 
 setup(
     name='msdsalgs',
-    version='0.9',
+    version='0.91',
     url='https://github.com/vphpersson/msdsalgs',
     author='vph',
     classifiers=[
@@ -11,6 +11,6 @@ setup(
         'Topic :: Software Development :: Libraries',
         'Programming Language :: Python :: 3.7',
     ],
-    packages=['msdsalgs'],
+    packages=find_packages(),
     python_requires='>=3.7'
 )

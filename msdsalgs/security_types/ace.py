@@ -4,7 +4,7 @@ from struct import unpack as struct_unpack, pack as struct_pack
 from uuid import UUID
 from typing import Optional
 
-from ad_data_gatherer.utils.microsoft_structures.sid import SID
+from .sid import SID
 
 
 class ACEType(IntEnum):

@@ -3,8 +3,8 @@ from dataclasses import dataclass
 from struct import unpack as struct_unpack
 from typing import Optional, ClassVar
 
-from ad_data_gatherer.utils.microsoft_structures.sid import SID
-from ad_data_gatherer.utils.microsoft_structures.acl import SACL, DACL
+from .sid import SID
+from .acl import SACL, DACL
 
 
 class BadSecurityDescriptorOffsetError(Exception):
