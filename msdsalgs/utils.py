@@ -37,11 +37,6 @@ def make_mask_class(int_flag_enum_cls: Type[IntFlag], name: Optional[str] = None
 
         setattr(int_flag_cls, field_name, make_field_property_accessor(enum_entry))
 
-    def to_mask(self) -> IntFlag:
-        return int_flag_enum_cls(self._mask.value)
-
-    setattr(int_flag_cls, 'to_mask', to_mask)
-
     def constructor(self, **kwargs):
         c = {**field_name_to_false, **kwargs}
         for field_name, value in c.items():
@@ -61,8 +56,17 @@ def make_mask_class(int_flag_enum_cls: Type[IntFlag], name: Optional[str] = None
 
         return cls_instance
 
+    def to_mask(self) -> IntFlag:
+        return int_flag_enum_cls(self._mask.value)
+
+    def set_all(self) -> None:
+        for field_name in field_name_to_false:
+            setattr(self, field_name, True)
+
     setattr(int_flag_cls, '__init__', constructor)
     setattr(int_flag_cls, 'from_mask', from_mask)
+    setattr(int_flag_cls, 'to_mask', to_mask)
+    setattr(int_flag_cls, 'set_all', set_all)
 
     return int_flag_cls
 
