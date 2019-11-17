@@ -82,6 +82,7 @@ def extract_elements(
         element: Any = create_element(data)
         elements.append(element)
 
+        # TODO: Maybe this should return `None` if there is no offset! Consequently: `if next_offset is None`.
         next_offset: int = get_next_offset(element)
 
         if next_offset == 0:
