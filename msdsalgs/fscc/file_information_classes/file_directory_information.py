@@ -2,6 +2,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from struct import unpack as struct_unpack
 
+from msdsalgs.fscc.file_information import FileInformation
+
 
 @dataclass
 class FileDirectoryInformation:

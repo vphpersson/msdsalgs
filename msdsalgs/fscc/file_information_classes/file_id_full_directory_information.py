@@ -4,6 +4,7 @@ from typing import ClassVar
 from struct import unpack as struct_unpack
 
 from .file_directory_information import FileDirectoryInformation
+from msdsalgs.fscc.file_information import FileInformation
 
 
 @dataclass
