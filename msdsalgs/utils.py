@@ -7,6 +7,7 @@ def make_mask_class(int_flag_enum_cls: Type[IntFlag], name: Optional[str] = None
 
     mask = int_flag_enum_cls(0x00)
 
+    # TODO: This first argument is odd, no?
     int_flag_cls = type(
         name or re_sub(r'^(Flag|Mask)$', '', int_flag_enum_cls.__name__),
         (object,),
@@ -40,6 +41,8 @@ def make_mask_class(int_flag_enum_cls: Type[IntFlag], name: Optional[str] = None
     def constructor(self, **kwargs):
         c = {**field_name_to_false, **kwargs}
         for field_name, value in c.items():
+            if field_name not in field_name_to_false:
+                raise ValueError(f'{field_name} is not part of the mask.')
             setattr(self, field_name, value)
 
     @classmethod
@@ -63,10 +66,18 @@ def make_mask_class(int_flag_enum_cls: Type[IntFlag], name: Optional[str] = None
         for field_name in field_name_to_false:
             setattr(self, field_name, True)
 
+    def __repr__(self) -> str:
+        return repr(self._mask)
+
+    def __eq__(self, other) -> bool:
+        return self.to_mask() == other.to_mask()
+
     setattr(int_flag_cls, '__init__', constructor)
     setattr(int_flag_cls, 'from_mask', from_mask)
     setattr(int_flag_cls, 'to_mask', to_mask)
     setattr(int_flag_cls, 'set_all', set_all)
+    setattr(int_flag_cls, '__repr__', __repr__)
+    setattr(int_flag_cls, '__eq__', __eq__)
 
     return int_flag_cls
 
