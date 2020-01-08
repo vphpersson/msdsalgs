@@ -1,4 +1,5 @@
-from typing import Type, Optional, Callable, Any, List, Dict
+from typing import Type, Optional, Callable, Any, List, Dict, Tuple
+from inspect import getmembers
 from enum import IntFlag
 from re import compile as re_compile, sub as re_sub
 
@@ -58,6 +59,13 @@ def make_mask_class(int_flag_enum_cls: Type[IntFlag], name: Optional[str] = None
         for field_name in field_name_to_false:
             setattr(self, field_name, False)
 
+    def items(self) -> Tuple[Tuple[str, bool], ...]:
+        return tuple(
+            (name, value)
+            for name, value in getmembers(self, lambda value: not callable(value))
+            if not name.startswith('_')
+        )
+
     def __repr__(self) -> str:
         return repr(self._mask)
 
@@ -75,6 +83,7 @@ def make_mask_class(int_flag_enum_cls: Type[IntFlag], name: Optional[str] = None
     setattr(int_flag_cls, '__repr__', __repr__)
     setattr(int_flag_cls, '__eq__', __eq__)
     setattr(int_flag_cls, '__int__', __int__)
+    setattr(int_flag_cls, 'items', items)
 
     return int_flag_cls
 
