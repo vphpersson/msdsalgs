@@ -1,6 +1,44 @@
-from typing import Type, Optional, Callable, Any, List, Dict
+from __future__ import annotations
+from typing import Type, Optional, Callable, Any, List, Dict, Final
 from enum import IntFlag
 from re import compile as re_compile, sub as re_sub
+from abc import ABC
+
+
+class Mask(ABC):
+
+    INT_FLAG_CLASS: Final[Type[IntFlag]] = NotImplemented
+
+    def __init__(self):
+        self._mask: IntFlag = ...
+
+    @classmethod
+    def from_int(cls, value: int):
+        cls_instance = cls()
+        cls_instance._mask |= value
+        return cls_instance
+
+    def to_int_flag(self) -> IntFlag:
+        return self.INT_FLAG_CLASS(self._mask.value)
+
+    def set_all(self) -> None:
+        for key in self.__dict__:
+            if not key.startswith('_'):
+                self.__dict__[key] = True
+
+    def clear_all(self) -> None:
+        for key in self.__dict__:
+            if not key.startswith('_'):
+                self.__dict__[key] = False
+
+    def __repr__(self) -> str:
+        return repr(self._mask)
+
+    def __eq__(self, other: Mask) -> bool:
+        return self.to_int_flag() == other.to_int_flag()
+
+    def __int__(self) -> int:
+        return self._mask.value
 
 
 def make_mask_class(int_flag_enum_cls: Type[IntFlag], name: Optional[str] = None, prefix: str = ''):
@@ -10,7 +48,7 @@ def make_mask_class(int_flag_enum_cls: Type[IntFlag], name: Optional[str] = None
     # TODO: The name generation is curious.
     int_flag_cls = type(
         name or re_sub(r'^(Flag|Mask)$', '', int_flag_enum_cls.__name__),
-        (object,),
+        (Mask,),
         dict(_mask=mask)
     )
 
@@ -41,40 +79,7 @@ def make_mask_class(int_flag_enum_cls: Type[IntFlag], name: Optional[str] = None
                 raise ValueError(f'{field_name} is not part of the mask.')
             setattr(self, field_name, value)
 
-    @classmethod
-    def from_int(cls, value: int):
-        cls_instance = cls()
-        cls_instance._mask |= value
-        return cls_instance
-
-    def to_int_flag(self) -> IntFlag:
-        return int_flag_enum_cls(self._mask.value)
-
-    def set_all(self) -> None:
-        for field_name in field_name_to_false:
-            setattr(self, field_name, True)
-
-    def clear_all(self) -> None:
-        for field_name in field_name_to_false:
-            setattr(self, field_name, False)
-
-    def __repr__(self) -> str:
-        return repr(self._mask)
-
-    def __eq__(self, other) -> bool:
-        return self.to_mask() == other.to_mask()
-
-    def __int__(self) -> int:
-        return self._mask.value
-
     setattr(int_flag_cls, '__init__', constructor)
-    setattr(int_flag_cls, 'from_int', from_int)
-    setattr(int_flag_cls, 'to_int_flag', to_int_flag)
-    setattr(int_flag_cls, 'set_all', set_all)
-    setattr(int_flag_cls, 'clear_all', clear_all)
-    setattr(int_flag_cls, '__repr__', __repr__)
-    setattr(int_flag_cls, '__eq__', __eq__)
-    setattr(int_flag_cls, '__int__', __int__)
 
     return int_flag_cls
 
