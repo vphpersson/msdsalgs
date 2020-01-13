@@ -1,6 +1,6 @@
 from __future__ import annotations
 from enum import IntEnum
-from typing import Optional, Dict, Type
+from typing import Optional, Dict, Type, Any
 from sys import modules as sys_modules
 from inspect import getmembers as inspect_getmembers, isclass as inspect_isclass
 from abc import ABC
@@ -2714,15 +2714,16 @@ class Win32ErrorCode(IntEnum):
 
 class Win32Error(Exception, ABC):
     DESCRIPTION: str = NotImplemented
-    WIN32_ERROR_CODE: Win32ErrorCode
+    WIN32_ERROR_CODE: Win32ErrorCode = NotImplemented
 
     WIN32_ERROR_CODE_TO_ERROR_CLASS: Dict[Win32ErrorCode, Type[Win32Error]] = NotImplemented
 
-    def __init__(self, description: Optional[str] = None):
+    def __init__(self, response: Optional[Any] = None, description: Optional[str] = None):
         super().__init__(description or self.DESCRIPTION)
+        self.response: Optional[Any] = response
 
     @classmethod
-    def from_nt_status(cls, win32_error_code: Win32Error, **error_options) -> Win32Error:
+    def from_win32_error_code(cls, win32_error_code: Win32Error, **error_options) -> Win32Error:
         return cls.WIN32_ERROR_CODE[win32_error_code](**error_options)
 
 
