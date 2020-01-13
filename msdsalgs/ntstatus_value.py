@@ -3,6 +3,7 @@ from enum import IntEnum
 from typing import Optional, Dict, Type
 from sys import modules as sys_modules
 from inspect import getmembers as inspect_getmembers, isclass as inspect_isclass
+from abc import ABC
 
 
 class NTStatusValue(IntEnum):
@@ -1803,7 +1804,7 @@ class NTStatusValue(IntEnum):
     STATUS_VHD_DIFFERENCING_CHAIN_ERROR_IN_PARENT = 0xC03A0019
 
 
-class NTStatusValueError(Exception):
+class NTStatusValueError(Exception, ABC):
     DESCRIPTION: str = NotImplemented
     NT_STATUS: NTStatusValue = NotImplemented
 
