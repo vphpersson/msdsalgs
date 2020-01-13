@@ -2724,17 +2724,7 @@ class Win32Error(Exception, ABC):
 
     @classmethod
     def from_win32_error_code(cls, win32_error_code: Win32ErrorCode, **error_options) -> Win32Error:
-        return cls.WIN32_ERROR_CODE[win32_error_code](**error_options)
-
-
-class ErrorSuccessError(Win32Error):
-    DESCRIPTION = """The operation completed successfully."""
-    WIN32_ERROR_CODE = Win32ErrorCode.ERROR_SUCCESS
-
-
-class NerrSuccessError(Win32Error):
-    DESCRIPTION = """The operation completed successfully."""
-    WIN32_ERROR_CODE = Win32ErrorCode.NERR_Success
+        return cls.WIN32_ERROR_CODE_TO_ERROR_CLASS[win32_error_code](**error_options)
 
 
 class ErrorInvalidFunctionError(Win32Error):
