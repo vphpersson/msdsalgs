@@ -2723,7 +2723,7 @@ class Win32Error(Exception, ABC):
         self.response: Optional[Any] = response
 
     @classmethod
-    def from_win32_error_code(cls, win32_error_code: Win32Error, **error_options) -> Win32Error:
+    def from_win32_error_code(cls, win32_error_code: Win32ErrorCode, **error_options) -> Win32Error:
         return cls.WIN32_ERROR_CODE[win32_error_code](**error_options)
 
 
