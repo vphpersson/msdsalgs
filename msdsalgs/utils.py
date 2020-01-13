@@ -1,85 +1,101 @@
-from typing import Type, Optional, Union, Callable, Any, List
+from __future__ import annotations
+from typing import Type, Optional, Callable, Any, List, Dict, Final, Tuple
+from inspect import getmembers
 from enum import IntFlag
-from re import compile as re_compile, sub as re_sub
+from re import sub as re_sub
+from abc import ABC
 
 
-def make_mask_class(int_flag_enum_cls: Type[IntFlag], name: Optional[str] = None, prefix: str = ''):
+class Mask(ABC):
+    INT_FLAG_CLASS: Final[Type[IntFlag]] = NotImplemented
 
-    mask = int_flag_enum_cls(0x00)
-
-    # TODO: This first argument is odd, no?
-    int_flag_cls = type(
-        name or re_sub(r'^(Flag|Mask)$', '', int_flag_enum_cls.__name__),
-        (object,),
-        dict(_mask=mask)
-    )
-
-    prefix_pattern = re_compile('^' + prefix.lower())
-    field_name_to_false = {}
-
-    def make_field_property_accessor(enum_entry: IntFlag):
-        def field_getter(self) -> bool:
-            return enum_entry in self._mask
-
-        def field_setter(self, value: bool) -> None:
-            if not isinstance(value, bool):
-                raise ValueError('Flag assign value must be a boolean.')
-
-            if value:
-                self._mask |= enum_entry
-            else:
-                self._mask &= ~enum_entry
-
-        return property(field_getter, field_setter)
-
-    for enum_entry in int_flag_enum_cls:
-        field_name = prefix_pattern.sub(repl='', string=enum_entry.name.lower())
-        field_name_to_false[field_name] = False
-
-        setattr(int_flag_cls, field_name, make_field_property_accessor(enum_entry))
-
-    def constructor(self, **kwargs):
-        c = {**field_name_to_false, **kwargs}
-        for field_name, value in c.items():
-            if field_name not in field_name_to_false:
-                raise ValueError(f'{field_name} is not part of the mask.')
-            setattr(self, field_name, value)
+    def __init__(self):
+        self._mask: IntFlag = self.INT_FLAG_CLASS(0)
 
     @classmethod
-    def from_mask(cls, mask: Union[IntFlag, int]):
+    def from_int(cls, value: int):
         cls_instance = cls()
-
-        if isinstance(mask, IntFlag):
-            cls_instance._mask |= mask.value
-        elif isinstance(mask, int):
-            cls_instance._mask |= mask
-        else:
-            # TODO: Add a proper exception.
-            raise ValueError('bad mask format')
-
+        cls_instance._mask |= value
         return cls_instance
 
-    def to_mask(self) -> IntFlag:
-        return int_flag_enum_cls(self._mask.value)
+    def to_int_flag(self) -> IntFlag:
+        return self.INT_FLAG_CLASS(self._mask.value)
 
     def set_all(self) -> None:
-        for field_name in field_name_to_false:
-            setattr(self, field_name, True)
+        for key, _ in self.items():
+            setattr(self, key, True)
+
+    def clear_all(self) -> None:
+        for key, _ in self.items():
+            setattr(self, key, False)
+
+    def items(self) -> Tuple[Tuple[str, bool], ...]:
+        return tuple(
+            (name, value)
+            for name, value in getmembers(self, lambda value: not callable(value))
+            if not name.startswith('_')
+        )
 
     def __repr__(self) -> str:
         return repr(self._mask)
 
-    def __eq__(self, other) -> bool:
-        return self.to_mask() == other.to_mask()
+    def __eq__(self, other: Mask) -> bool:
+        return self.to_int_flag() == other.to_int_flag()
 
-    setattr(int_flag_cls, '__init__', constructor)
-    setattr(int_flag_cls, 'from_mask', from_mask)
-    setattr(int_flag_cls, 'to_mask', to_mask)
-    setattr(int_flag_cls, 'set_all', set_all)
-    setattr(int_flag_cls, '__repr__', __repr__)
-    setattr(int_flag_cls, '__eq__', __eq__)
+    def __int__(self) -> int:
+        return self._mask.value
 
-    return int_flag_cls
+    @classmethod
+    def make_class(
+        cls,
+        int_flag_class: Type[IntFlag],
+        name: Optional[str] = None,
+        prefix: str = ''
+    ) -> Type[Mask]:
+        """
+        Dynamically create a new `Mask` child class from an `IntFlag` class.
+
+        :param int_flag_class: An `IntFlag` class with enumeration members to be added to the class to be created.
+        :param name: The name of the class to be created.
+        :param prefix: A prefix of the enumeration member attributes in `int_flag_class` that is to be ignored.
+        :return: A mask class with attributes corresponding to those in the provided `IntFlag` class.
+        """
+
+        mask_class = type(
+            name or re_sub(r'(Flag|Mask)+$', '', int_flag_class.__name__),
+            (cls,),
+            dict()
+        )
+
+        def make_field_property_accessor(enum_member: IntFlag):
+            def field_getter(self) -> bool:
+                return enum_member in self._mask
+
+            def field_setter(self, value: bool) -> None:
+                if value:
+                    self._mask |= enum_member
+                else:
+                    self._mask &= ~enum_member
+
+            return property(field_getter, field_setter)
+
+        attribute_name_to_false: Dict[str, bool] = {}
+        for enum_member in int_flag_class:
+            attribute_name: str = re_sub(pattern=f'^{prefix.lower()}', repl='', string=enum_member.name.lower())
+            setattr(mask_class, attribute_name, make_field_property_accessor(enum_member=enum_member))
+            attribute_name_to_false[attribute_name] = False
+
+        def constructor(self, **kwargs):
+            super(mask_class, self).__init__()
+            for attribute_name, value in {**attribute_name_to_false, **kwargs}.items():
+                if attribute_name not in attribute_name_to_false:
+                    raise ValueError(f'{attribute_name} is not part of the mask.')
+                setattr(self, attribute_name, value)
+
+        setattr(mask_class, '__init__', constructor)
+        setattr(mask_class, 'INT_FLAG_CLASS', int_flag_class)
+
+        return mask_class
 
 
 def extract_elements(
