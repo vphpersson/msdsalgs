@@ -45,7 +45,7 @@ class FileInformation:
             _change_time=struct_unpack('<Q', data[24:32])[0],
             allocation_size=struct_unpack('<Q', data[32:40])[0],
             endof_file=struct_unpack('<Q', data[40:48])[0],
-            file_attributes=FileAttributes.from_mask(struct_unpack('<I', data[48:56])[0])
+            file_attributes=FileAttributes.from_int(struct_unpack('<I', data[48:56])[0])
         )
 
     def __bytes__(self) -> bytes:
@@ -56,7 +56,7 @@ class FileInformation:
             struct_pack('<Q', self._change_time),
             struct_pack('<Q', self.allocation_size),
             struct_pack('<Q', self.endof_file),
-            struct_pack('<I', self.file_attributes.to_mask())
+            struct_pack('<I', int(self.file_attributes))
         ])
 
     def __len__(self) -> int:
