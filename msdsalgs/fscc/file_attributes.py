@@ -1,5 +1,5 @@
 from enum import IntFlag
-from msdsalgs.utils import make_mask_class
+from msdsalgs.utils import Mask
 
 
 class FileAttributesFlag(IntFlag):
@@ -20,4 +20,4 @@ class FileAttributesFlag(IntFlag):
     FILE_ATTRIBUTE_NO_SCRUB_DATA = 0x00020000
 
 
-FileAttributes = make_mask_class(FileAttributesFlag, prefix='FILE_ATTRIBUTE_')
+FileAttributes = Mask.make_class(FileAttributesFlag, prefix='FILE_ATTRIBUTE_')
