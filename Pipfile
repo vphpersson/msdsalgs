@@ -8,6 +8,7 @@ pytest = "*"
 
 [packages]
 pycryptodome = "*"
+ndr = {file = "https://github.com/vphpersson/ndr/tarball/master"}
 
 [requires]
 python_version = "3.8"
