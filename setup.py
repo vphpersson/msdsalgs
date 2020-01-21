@@ -5,7 +5,7 @@ setup(
     version='0.1',
     packages=find_packages(),
     install_requires=[
-        'pycryptodome'
+        'pycryptodome',
         'ndr @ https://github.com/vphpersson/ndr/tarball/master'
     ]
 )
