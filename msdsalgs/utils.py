@@ -5,6 +5,8 @@ from enum import IntFlag
 from re import sub as re_sub
 from abc import ABC
 
+from pyutils.my_string import to_snake_case
+
 
 class Mask(ABC):
     INT_FLAG_CLASS: Final[Type[IntFlag]] = NotImplemented
@@ -50,7 +52,8 @@ class Mask(ABC):
         cls,
         int_flag_class: Type[IntFlag],
         name: Optional[str] = None,
-        prefix: str = ''
+        prefix: str = '',
+        attribute_name_formatter: Optional[Callable[[str], str]] = None
     ) -> Type[Mask]:
         """
         Dynamically create a new `Mask` child class from an `IntFlag` class.
@@ -67,6 +70,8 @@ class Mask(ABC):
             dict()
         )
 
+        attribute_name_formatter: Callable[[str], str] = attribute_name_formatter or to_snake_case
+
         def make_field_property_accessor(enum_member: IntFlag):
             def field_getter(self) -> bool:
                 return enum_member in self._mask
@@ -81,7 +86,9 @@ class Mask(ABC):
 
         attribute_name_to_false: Dict[str, bool] = {}
         for enum_member in int_flag_class:
-            attribute_name: str = re_sub(pattern=f'^{prefix.lower()}', repl='', string=enum_member.name.lower())
+            attribute_name: str = attribute_name_formatter(
+                string=re_sub(pattern=f'^{prefix}', repl='', string=enum_member.name)
+            )
             setattr(mask_class, attribute_name, make_field_property_accessor(enum_member=enum_member))
             attribute_name_to_false[attribute_name] = False
 
