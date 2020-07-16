@@ -7,6 +7,6 @@ setup(
     install_requires=[
         'pycryptodome',
         'ndr @ https://github.com/vphpersson/ndr/tarball/master',
-        'pyutils @ "https://github.com/vphpersson/pyutils/tarball/master"'
+        'pyutils @ https://github.com/vphpersson/pyutils/tarball/master'
     ]
 )
