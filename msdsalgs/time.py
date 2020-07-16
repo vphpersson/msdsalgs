@@ -1,4 +1,7 @@
+from typing import Optional, Union
 from datetime import datetime, timedelta
+from struct import unpack_from as struct_unpack_from
+
 
 MS_EPOCH_INCEPTION = datetime(year=1601, month=1, day=1)
 
@@ -25,21 +28,24 @@ def datetime_to_filetime(dt: datetime) -> bytes:
     return ms_timestamp_to_filetime(ms_timestamp=datetime_to_ms_timestamp(dt=dt))
 
 
-def filetime_to_datetime(filetime: int) -> datetime:
+def filetime_to_datetime(filetime: Union[int, bytes]) -> Optional[datetime]:
     """
     Convert a `FILETIME` value to a datetime object.
 
     A `FILETIME` value represents a period as a count of 100-nanosecond time slices. When interpreted as a
     timestamp, it should be considered in relation to the inception of the Windows epoch date: 1601-01-01.
 
-    NOTE: There is a loss of precision when converting to a `datetime` object (tenth of a microsecond?), because
+    NOTE: There is a loss of precision when converting to a `datetime` object (tenth of a microsecond), because
     `datetime` only has microsecond precision.
 
-    :param filetime: A `FILETIME` integer value.
-    :return: A datetime object corresponding to the provided timestamp.
+    :param filetime: A `FILETIME` value as an integer or bytes.
+    :return: A datetime object corresponding to the provided timestamp; `None` if it is blank.
     """
 
-    return MS_EPOCH_INCEPTION + timedelta(microseconds=filetime // 10)
+    if isinstance(filetime, bytes):
+        filetime: int = struct_unpack_from('<Q', buffer=filetime, offset=0)[0]
+
+    return (MS_EPOCH_INCEPTION + timedelta(microseconds=filetime // 10)) if filetime else None
 
 
 def delta_time_to_filetime(delta_time: int) -> int:
