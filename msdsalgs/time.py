@@ -4,6 +4,7 @@ from struct import unpack_from as struct_unpack_from
 
 
 MS_EPOCH_INCEPTION = datetime(year=1601, month=1, day=1)
+FAT_TIME_INCEPTION_YEAR = 1980
 
 
 def ms_timestamp_to_filetime(ms_timestamp: int) -> bytes:
@@ -43,7 +44,7 @@ def filetime_to_datetime(filetime: Union[int, bytes]) -> Optional[datetime]:
     """
 
     if isinstance(filetime, bytes):
-        filetime: int = struct_unpack_from('<Q', buffer=filetime, offset=0)[0]
+        filetime: int = struct_unpack_from('<Q', buffer=filetime)[0]
 
     return (MS_EPOCH_INCEPTION + timedelta(microseconds=filetime // 10)) if filetime else None
 
@@ -68,4 +69,26 @@ def delta_time_to_filetime(delta_time: int) -> int:
     return int.from_bytes(
         bytes=(~delta_time + 1).to_bytes(length=8, byteorder='big', signed=True),
         byteorder='big'
+    )
+
+
+def dos_time_to_datetime(dos_time: Union[int, bytes], offset: int = 0) -> Optional[datetime]:
+    """
+    Convert a DOS time value to a datetime value.
+
+    :param dos_time: A DOS time value as an integer or byte sequence.
+    :param offset: An offset in the DOS time, in case it is bytes, from where to extract the DOS time integer value.
+    :return: The DOS time as a `datetime` instance, or `None` if it is blank.
+    """
+
+    if isinstance(dos_time, bytes):
+        dos_time: int = struct_unpack_from('>H', buffer=dos_time, offset=offset)[0]
+
+    if not dos_time:
+        return None
+
+    return datetime(
+        year=FAT_TIME_INCEPTION_YEAR + ((dos_time & 0b0000_0000_0111_1111) >> 1),
+        month=(dos_time & 0b0000_0111_1000_0000) >> 7,
+        day=(dos_time & 0b1111_1000_0000_0000) >> 11
     )
