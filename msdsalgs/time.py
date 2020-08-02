@@ -1,6 +1,8 @@
-from typing import Optional, Union
+from typing import Optional, Union, ByteString
 from datetime import datetime, timedelta
 from struct import unpack_from as struct_unpack_from
+
+from pyutils.my_typing import IntLike, is_int_like
 
 
 MS_EPOCH_INCEPTION = datetime(year=1601, month=1, day=1)
@@ -29,7 +31,7 @@ def datetime_to_filetime(dt: datetime) -> bytes:
     return ms_timestamp_to_filetime(ms_timestamp=datetime_to_ms_timestamp(dt=dt))
 
 
-def filetime_to_datetime(filetime: Union[int, bytes]) -> Optional[datetime]:
+def filetime_to_datetime(filetime: Union[IntLike, ByteString], offset: IntLike = 0) -> Optional[datetime]:
     """
     Convert a `FILETIME` value to a datetime object.
 
@@ -40,16 +42,20 @@ def filetime_to_datetime(filetime: Union[int, bytes]) -> Optional[datetime]:
     `datetime` only has microsecond precision.
 
     :param filetime: A `FILETIME` value as an integer or bytes.
+    :param offset: An offset in the input value, in case it is a byte string, from where the extract the `FILETIME`
+        integer value.
     :return: A datetime object corresponding to the provided timestamp; `None` if it is blank.
     """
 
-    if isinstance(filetime, bytes):
-        filetime: int = struct_unpack_from('<Q', buffer=filetime)[0]
+    filetime: int = int(
+        filetime if is_int_like(value=filetime)
+        else struct_unpack_from('<Q', buffer=filetime, offset=int(offset))[0]
+    )
 
     return (MS_EPOCH_INCEPTION + timedelta(microseconds=filetime // 10)) if filetime else None
 
 
-def delta_time_to_filetime(delta_time: int) -> int:
+def delta_time_to_filetime(delta_time: IntLike) -> int:
     """
     Convert a signed 64-bit integer value with _delta syntax_ into its corresponding `FILETIME` value.
 
@@ -67,28 +73,28 @@ def delta_time_to_filetime(delta_time: int) -> int:
     """
 
     return int.from_bytes(
-        bytes=(~delta_time + 1).to_bytes(length=8, byteorder='big', signed=True),
+        bytes=(~int(delta_time) + 1).to_bytes(length=8, byteorder='big', signed=True),
         byteorder='big'
     )
 
 
-def dos_time_to_datetime(dos_time: Union[int, bytes], offset: int = 0) -> Optional[datetime]:
+def dos_time_to_datetime(dos_time: Union[IntLike, ByteString], offset: IntLike = 0) -> Optional[datetime]:
     """
     Convert a DOS time value to a datetime value.
 
     :param dos_time: A DOS time value as an integer or byte sequence.
-    :param offset: An offset in the DOS time, in case it is bytes, from where to extract the DOS time integer value.
+    :param offset: An offset in the input value, in case it is byte string, from where to extract the DOS time integer
+        value.
     :return: The DOS time as a `datetime` instance, or `None` if it is blank.
     """
 
-    if isinstance(dos_time, bytes):
-        dos_time: int = struct_unpack_from('>H', buffer=dos_time, offset=offset)[0]
-
-    if not dos_time:
-        return None
+    dos_time: int = int(
+        dos_time if is_int_like(value=dos_time)
+        else struct_unpack_from('>H', buffer=dos_time, offset=int(offset))[0]
+    )
 
     return datetime(
         year=FAT_TIME_INCEPTION_YEAR + ((dos_time & 0b0000_0000_0111_1111) >> 1),
         month=(dos_time & 0b0000_0111_1000_0000) >> 7,
         day=(dos_time & 0b1111_1000_0000_0000) >> 11
-    )
+    ) if dos_time else None

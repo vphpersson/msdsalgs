@@ -61,6 +61,7 @@ class Mask(ABC):
         :param int_flag_class: An `IntFlag` class with enumeration members to be added to the class to be created.
         :param name: The name of the class to be created.
         :param prefix: A prefix of the enumeration member attributes in `int_flag_class` that is to be ignored.
+        :param attribute_name_formatter: A function that will format the attribute names.
         :return: A mask class with attributes corresponding to those in the provided `IntFlag` class.
         """
 
@@ -87,7 +88,7 @@ class Mask(ABC):
         attribute_name_to_false: Dict[str, bool] = {}
         for enum_member in int_flag_class:
             attribute_name: str = attribute_name_formatter(
-                string=re_sub(pattern=f'^{prefix}', repl='', string=enum_member.name)
+                re_sub(pattern=f'^{prefix}', repl='', string=enum_member.name)
             )
             setattr(mask_class, attribute_name, make_field_property_accessor(enum_member=enum_member))
             attribute_name_to_false[attribute_name] = False
