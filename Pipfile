@@ -8,7 +8,6 @@ pytest = "*"
 
 [packages]
 pycryptodome = "*"
-ndr = {file = "https://github.com/vphpersson/ndr/tarball/master"}
 pyutils = {file = "https://github.com/vphpersson/pyutils/tarball/master"}
 
 
