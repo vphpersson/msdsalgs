@@ -31,6 +31,8 @@ def datetime_to_filetime(dt: datetime) -> bytes:
     return ms_timestamp_to_filetime(ms_timestamp=datetime_to_ms_timestamp(dt=dt))
 
 
+# TODO: Not sure it is okay to use `None` if `filetime` is `0`: the date is the inception date!
+
 def filetime_to_datetime(filetime: Union[IntLike, ByteString], offset: IntLike = 0) -> Optional[datetime]:
     """
     Convert a `FILETIME` value to a datetime object.
@@ -78,23 +80,46 @@ def delta_time_to_filetime(delta_time: IntLike) -> int:
     )
 
 
-def dos_time_to_datetime(dos_time: Union[IntLike, ByteString], offset: IntLike = 0) -> Optional[datetime]:
+def dos_date_to_datetime(dos_date: Union[IntLike, ByteString], offset: IntLike = 0) -> Optional[datetime]:
     """
-    Convert a DOS time value to a datetime value.
+    Convert a DOS date value to a `datetime` value.
 
-    :param dos_time: A DOS time value as an integer or byte sequence.
-    :param offset: An offset in the input value, in case it is byte string, from where to extract the DOS time integer
+    :param dos_date: A DOS date value as an integer or byte string.
+    :param offset: An offset in the input value, in case it is byte string, from where to extract the DOS date integer
         value.
-    :return: The DOS time as a `datetime` instance, or `None` if it is blank.
+    :return: The DOS time as a `datetime` instance, or `None` of the DOS date value is blank.
+    """
+
+    dos_date: int = int(
+        dos_date if is_int_like(value=dos_date)
+        else struct_unpack_from('<H', buffer=dos_date, offset=int(offset))[0]
+    )
+
+    return datetime(
+        year=FAT_TIME_INCEPTION_YEAR + ((dos_date & 0b1111_1110_0000_0000) >> 9),
+        month=((dos_date & 0b0000_0001_1110_0000) >> 5) or 1,
+        day=(dos_date & 0b0000_0000_0001_1111) or 1
+    ) if dos_date else None
+
+
+def dos_time_to_timedelta(dos_time: Union[IntLike, ByteString], offset: IntLike = 0) -> timedelta:
+    """
+    Convert a DOS time value to a `timedelta` value.
+
+    :param dos_time: A DOS time value as an integer or byte byte string.
+    :param offset: An offset in the input value, in case it is a byte string, from where to extract the DOS time integer
+        value.
+    :return: The DOS time as a `timedelta` instance.
     """
 
     dos_time: int = int(
         dos_time if is_int_like(value=dos_time)
-        else struct_unpack_from('>H', buffer=dos_time, offset=int(offset))[0]
+        else struct_unpack_from('<H', buffer=dos_time, offset=int(offset))[0]
     )
 
-    return datetime(
-        year=FAT_TIME_INCEPTION_YEAR + ((dos_time & 0b0000_0000_0111_1111) >> 1),
-        month=(dos_time & 0b0000_0111_1000_0000) >> 7,
-        day=(dos_time & 0b1111_1000_0000_0000) >> 11
-    ) if dos_time else None
+    return timedelta(
+        # Number of "two-seconds", thus shift left by one (multiply by two).
+        seconds=(dos_time & 0b0000_0000_0001_1111) << 1,
+        minutes=(dos_time & 0b0000_0111_1110_0000) >> 5,
+        hours=(dos_time & 0b1111_1000_0000_0000) >> 11
+    )
