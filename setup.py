@@ -6,6 +6,6 @@ setup(
     packages=find_packages(),
     install_requires=[
         'pycryptodome',
-        'pyutils @ https://github.com/vphpersson/pyutils/tarball/master'
+        'pyutils @ git+ssh://git@github.com/vphpersson/pyutils.git#egg=pyutils',
     ]
 )
