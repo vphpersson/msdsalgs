@@ -1,2 +1,2 @@
-pycryptodome==3.9.9
--e git+ssh://git@github.com/vphpersson/pyutils.git@e09f9761e3299c1765f089ade355dfa30deaab88#egg=pyutils
+pycryptodome
+-e git+ssh://git@github.com/vphpersson/pyutils.git#egg=pyutils
