@@ -8,7 +8,6 @@ from abc import ABC
 
 class NTStatusValue(IntEnum):
     STATUS_SUCCESS = 0x00000000
-    STATUS_WAIT_0 = 0x00000000
     STATUS_WAIT_1 = 0x00000001
     STATUS_WAIT_2 = 0x00000002
     STATUS_WAIT_3 = 0x00000003
@@ -1816,11 +1815,6 @@ class NTStatusValueError(Exception, ABC):
     @classmethod
     def from_nt_status(cls, nt_status: NTStatusValue, **error_options) -> NTStatusValueError:
         return cls.NT_STATUS_TO_ERROR_CLASS[nt_status](**error_options)
-
-
-class StatusWait0Error(NTStatusValueError):
-    DESCRIPTION = """The caller specified WaitAny for WaitType and one of the dispatcher objects in the Object array has been set to the signaled state."""
-    NT_STATUS = NTStatusValue.STATUS_WAIT_0
 
 
 class StatusWait1Error(NTStatusValueError):
