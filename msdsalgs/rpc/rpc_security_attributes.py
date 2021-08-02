@@ -1,5 +1,5 @@
 from __future__ import annotations
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import ByteString
 from struct import pack, unpack_from
 
@@ -8,8 +8,8 @@ from msdsalgs.rpc.rpc_security_descriptor import RPCSecurityDescriptor
 
 @dataclass
 class RPCSecurityAttributes:
-    rpc_security_descriptor: RPCSecurityDescriptor
-    inherit_handle: bool
+    rpc_security_descriptor: RPCSecurityDescriptor = field(default_factory=RPCSecurityDescriptor)
+    inherit_handle: bool = False
 
     @classmethod
     def from_bytes(cls, data: ByteString, base_offset: int = 0) -> RPCSecurityAttributes:
