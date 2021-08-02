@@ -1,2 +1,3 @@
 pycryptodome
 -e git+ssh://git@github.com/vphpersson/pyutils.git#egg=pyutils
+-e git+ssh://git@github.com/vphpersson/ndr.git#egg=ndr

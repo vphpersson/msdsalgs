@@ -2,7 +2,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Optional, ClassVar, ByteString
 from enum import IntFlag
-from struct import unpack_from
+from struct import unpack_from, pack
 
 from msdsalgs.security_types.sid import SID
 from msdsalgs.security_types.acl import SACL, DACL
@@ -69,12 +69,16 @@ class SecurityDescriptor:
     sacl: Optional[SACL]
     dacl: Optional[DACL]
 
-    revision: ClassVar[int] = 0x1
+    REVISION: ClassVar[int] = 1
+    SBZ_1: ClassVar[int] = 1
 
     @classmethod
     def from_bytes(cls, data: ByteString, base_offset: int = 0) -> SecurityDescriptor:
         data = memoryview(data)[base_offset:]
-        offset = 2
+        offset = 0
+
+        # TODO: Parse `Revision` and `Sbz1`?
+        offset += 2
 
         control_mask = SecurityDescriptorControl.from_int(value=unpack_from('<H', buffer=data, offset=offset)[0])
         offset += 2
@@ -122,3 +126,41 @@ class SecurityDescriptor:
             dacl=DACL.from_bytes(data=data[dacl_offset:]) if dacl_offset != 0 else None,
             sacl=SACL.from_bytes(data=data[sacl_offset:]) if sacl_offset != 0 else None
         )
+
+    def __bytes__(self) -> bytes:
+
+        structures_offset = 20
+
+        if self.owner_sid is not None:
+            owner_sid_offset = structures_offset
+            structures_offset += len(self.owner_sid)
+        else:
+            owner_sid_offset = 0
+
+        if self.group_sid is not None:
+            group_sid_offset = structures_offset
+            structures_offset += len(self.group_sid)
+        else:
+            group_sid_offset = 0
+
+        if self.sacl is not None:
+            sacl_offset = structures_offset
+            structures_offset += len(self.sacl)
+        else:
+            sacl_offset = 0
+
+        if self.dacl is not None:
+            dacl_offset = structures_offset
+            structures_offset += len(self.dacl)
+        else:
+            dacl_offset = 0
+
+        return b''.join([
+            self.REVISION,
+            self.SBZ_1,
+            pack('<H', int(self.control)),
+            pack('<I', owner_sid_offset),
+            pack('<I', group_sid_offset),
+            pack('<I', sacl_offset),
+            pack('<I', dacl_offset)
+        ])
