@@ -17,11 +17,11 @@ class RPCSecurityDescriptor:
 
     @property
     def in_security_descriptor(self) -> int:
-        return len(bytes(self.security_descriptor)) if self.security_descriptor else 0
+        return len(bytes(self.security_descriptor)) if self.security_descriptor is not None else 0
 
     @property
     def out_security_descriptor(self) -> int:
-        return len(bytes(self.security_descriptor)) if self.security_descriptor else 0
+        return len(bytes(self.security_descriptor)) if self.security_descriptor is not None else 0
 
     @classmethod
     def from_bytes(cls, data: ByteString, base_offset: int = 0) -> RPCSecurityDescriptor:
@@ -50,4 +50,4 @@ class RPCSecurityDescriptor:
         ])
 
     def __len__(self) -> int:
-        return len(self.__bytes__())
+        return Pointer.structure_size + self.in_security_descriptor + 4 + 4

@@ -1,6 +1,6 @@
 from __future__ import annotations
 from dataclasses import dataclass
-from typing import Optional, ByteString
+from typing import ByteString
 from struct import pack, unpack_from
 
 from msdsalgs.rpc.rpc_security_descriptor import RPCSecurityDescriptor
@@ -34,5 +34,9 @@ class RPCSecurityAttributes:
         return b''.join([
             pack('<I', security_descriptor_len),
             rpc_security_descriptor_bytes,
-            pack('<I', int(self.inherit_handle))
+            pack('<B', int(self.inherit_handle))
         ])
+
+    def __len__(self) -> int:
+        return 4 + len(self.rpc_security_descriptor) + 1
+
