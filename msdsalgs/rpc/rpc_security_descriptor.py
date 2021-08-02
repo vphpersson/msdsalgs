@@ -1,7 +1,7 @@
 from __future__ import annotations
 from dataclasses import dataclass
 from typing import ClassVar, ByteString, Optional
-from struct import pack
+from struct import Struct
 
 from ndr.structures.pointer import Pointer, NullPointer
 
@@ -22,6 +22,9 @@ class RPCSecurityDescriptor:
     @property
     def out_security_descriptor(self) -> int:
         return len(bytes(self.security_descriptor)) if self.security_descriptor is not None else 0
+
+    _IN_SECURITY_DESCRIPTOR_STRUCT = Struct('<I')
+    _OUT_SECURITY_DESCRIPTOR_STRUCT = Struct('<I')
 
     @classmethod
     def from_bytes(cls, data: ByteString, base_offset: int = 0) -> RPCSecurityDescriptor:
@@ -45,9 +48,14 @@ class RPCSecurityDescriptor:
                 Pointer(representation=bytes(self.security_descriptor)) if self.security_descriptor is not None
                 else NullPointer()
             ),
-            pack('<H', security_descriptor_len),
-            pack('<H', security_descriptor_len)
+            self._IN_SECURITY_DESCRIPTOR_STRUCT.pack(security_descriptor_len),
+            self._OUT_SECURITY_DESCRIPTOR_STRUCT.pack(security_descriptor_len)
         ])
 
     def __len__(self) -> int:
-        return Pointer.structure_size + self.in_security_descriptor + 4 + 4
+        return (
+            Pointer.structure_size
+            + self.in_security_descriptor
+            + self._IN_SECURITY_DESCRIPTOR_STRUCT.size
+            + self._OUT_SECURITY_DESCRIPTOR_STRUCT.size
+        )
