@@ -1,7 +1,7 @@
 from __future__ import annotations
 from dataclasses import dataclass
-from typing import ClassVar
-from struct import pack as struct_pack
+from typing import ClassVar, ByteString
+from struct import pack
 
 from msdsalgs.security_types.security_descriptor import SecurityDescriptor
 
@@ -22,14 +22,15 @@ class RPCSecurityDescriptor:
         return len(bytes(self.security_descriptor))
 
     @classmethod
-    def from_bytes(cls, data: bytes) -> RPCSecurityDescriptor:
+    def from_bytes(cls, data: ByteString, base_offset: int = 0) -> RPCSecurityDescriptor:
+        data = memoryview(data)[base_offset:]
         return cls(security_descriptor=SecurityDescriptor.from_bytes(data=data))
 
     def __bytes__(self) -> bytes:
         return b''.join([
             bytes(self.security_descriptor),
-            struct_pack('<H', self.in_security_descriptor),
-            struct_pack('<H', self.out_security_descriptor)
+            pack('<H', self.in_security_descriptor),
+            pack('<H', self.out_security_descriptor)
         ])
 
     def __len__(self) -> int:
