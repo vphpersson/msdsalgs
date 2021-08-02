@@ -1,6 +1,6 @@
 from __future__ import annotations
-from typing import Tuple, Optional
-from struct import unpack as struct_unpack, pack as struct_pack
+from typing import Optional, ByteString
+from struct import unpack_from, pack, Struct, calcsize
 from enum import Enum
 from re import compile as re_compile
 
@@ -25,14 +25,14 @@ class IdentifierAuthority(Enum):
     SECURITY_AUTHENTICATION_AUTHORITY = (0x00, 0x00, 0x00, 0x00, 0x00, 0x12)
 
     def __bytes__(self) -> bytes:
-        return struct_pack('<BBBBBB', *self.value)
+        return pack('<BBBBBB', *self.value)
 
 
 class SID:
     def __init__(
         self,
         identifier_authority: IdentifierAuthority,
-        sub_authorities: Tuple[int, ...],
+        sub_authorities: tuple[int, ...],
         revision_number: int = 1
     ):
         """
@@ -79,16 +79,37 @@ class SID:
             sub_authorities=tuple(int(part) for part in match.group('sub_authority_str')[1:].split('-'))
         )
 
-    # TODO: Add another decorator that initiates an instance of `struct.Struct`? Or just refer to one using a property.
+    _REVISION_NUMBER_STRUCT = Struct('<B')
+    _NUM_SUB_AUTHORITIES_STRUCT = Struct('<B')
+    _IDENTIFIER_AUTHORITY_STRUCT = Struct('<BBBBBB')
+    _SUB_AUTHORITY_STRUCT_FORMAT = 'I'
+
     @classmethod
-    def from_bytes(cls, data: bytes) -> SID:
-        revision_number: int = struct_unpack('<B', data[0:1])[0]
-        num_sub_authorities: int = struct_unpack('<B', data[1:2])[0]
+    def from_bytes(cls, data: ByteString, base_offset: int = 0) -> SID:
+        data = memoryview(data)[base_offset:]
+        offset = 0
+
+        revision_number: int = cls._REVISION_NUMBER_STRUCT.unpack_from(buffer=data, offset=offset)[0]
+        offset += cls._REVISION_NUMBER_STRUCT.size
+
+        num_sub_authorities: int = cls._NUM_SUB_AUTHORITIES_STRUCT.unpack_from(buffer=data, offset=offset)[0]
+        offset += cls._NUM_SUB_AUTHORITIES_STRUCT.size
+
+        identifier_authority = IdentifierAuthority(
+            cls._IDENTIFIER_AUTHORITY_STRUCT.unpack_from(buffer=data, offset=offset)
+        )
+        offset += cls._IDENTIFIER_AUTHORITY_STRUCT.size
+
+        sub_authorities: tuple[int, ...] = unpack_from(
+            '<' + num_sub_authorities * cls._SUB_AUTHORITY_STRUCT_FORMAT,
+            buffer=data,
+            offset=offset
+        )
 
         return cls(
             revision_number=revision_number,
-            identifier_authority=IdentifierAuthority(struct_unpack('<BBBBBB', data[2:8])),
-            sub_authorities=struct_unpack('<' + num_sub_authorities * 'I', data[8:8+4*num_sub_authorities])
+            identifier_authority=identifier_authority,
+            sub_authorities=sub_authorities
         )
 
     def __str__(self) -> str:
@@ -97,22 +118,25 @@ class SID:
 
     def __bytes__(self) -> bytes:
         return b''.join([
-            struct_pack('<B', self._revision_number),
-            struct_pack('<B', len(self.sub_authorities)),
-            bytes(self.identifier_authority),
-            struct_pack('<' + len(self.sub_authorities) * 'I', *self.sub_authorities)
+            self._REVISION_NUMBER_STRUCT.pack(self._revision_number),
+            self._NUM_SUB_AUTHORITIES_STRUCT.pack(len(self.sub_authorities)),
+            self._IDENTIFIER_AUTHORITY_STRUCT.pack(self.identifier_authority.value),
+            pack('<' + len(self.sub_authorities) * self._SUB_AUTHORITY_STRUCT_FORMAT, *self.sub_authorities)
         ])
 
     def __len__(self) -> int:
-        # The size of the number of sub-authorities number, the size of the identifier authority tuple, and the size
-        # of each sub-authority.
-        return 2 + 6 + 4 * len(self.sub_authorities)
+        return (
+            self._REVISION_NUMBER_STRUCT.size
+            + self._NUM_SUB_AUTHORITIES_STRUCT.size
+            + self._IDENTIFIER_AUTHORITY_STRUCT.size
+            + calcsize(self._SUB_AUTHORITY_STRUCT_FORMAT) * len(self.sub_authorities)
+        )
 
 
 class DomainedSID(SID):
 
     @property
-    def domain_id(self) -> Optional[Tuple[int, int, int]]:
+    def domain_id(self) -> Optional[tuple[int, int, int]]:
         return self.sub_authorities[1:4] \
             if self.identifier_authority == IdentifierAuthority.SECURITY_NT_AUTHORITY and self.sub_authorities[0] == 21 \
             else None
