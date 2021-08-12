@@ -3,13 +3,14 @@ from dataclasses import dataclass
 from typing import ClassVar, ByteString, Optional
 from struct import Struct
 
+from ndr.structures import NDRType
 from ndr.structures.pointer import Pointer, NullPointer
 
 from msdsalgs.security_types.security_descriptor import SecurityDescriptor
 
 
 @dataclass
-class RPCSecurityDescriptor:
+class RPCSecurityDescriptor(NDRType):
     # TODO: Is this correct?
     STRUCTURE_SIZE: ClassVar[int] = 8
 
