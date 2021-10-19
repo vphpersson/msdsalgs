@@ -1,11 +1,11 @@
 from typing import Optional, Union, ByteString
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from struct import unpack_from as struct_unpack_from
 
 from pyutils.my_typing import IntLike, is_int_like
 
 
-MS_EPOCH_INCEPTION = datetime(year=1601, month=1, day=1)
+MS_EPOCH_INCEPTION = datetime(year=1601, month=1, day=1, tzinfo=timezone.utc)
 FAT_TIME_INCEPTION_YEAR = 1980
 
 
