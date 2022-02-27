@@ -6,7 +6,7 @@ setup(
     packages=find_packages(),
     install_requires=[
         'pycryptodome',
-        'pyutils @ git+ssh://git@github.com/vphpersson/pyutils.git#egg=pyutils',
-        'ndr @ git+ssh://git@github.com/vphpersson/ndr.git#egg=ndr'
+        'pyutils @ git+https://github.com/vphpersson/pyutils.git#egg=pyutils',
+        'ndr @ git+https://github.com/vphpersson/ndr.git#egg=ndr'
     ]
 )
