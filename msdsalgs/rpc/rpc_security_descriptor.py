@@ -28,7 +28,7 @@ class RPCSecurityDescriptor(NDRType):
     _OUT_SECURITY_DESCRIPTOR_STRUCT = Struct('<I')
 
     @classmethod
-    def from_bytes(cls, data: ByteString, base_offset: int = 0) -> RPCSecurityDescriptor:
+    def from_bytes(cls, data: ByteString | memoryview, base_offset: int = 0) -> RPCSecurityDescriptor:
         data = memoryview(data)[base_offset:]
         offset = 0
 

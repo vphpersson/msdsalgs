@@ -1,3 +1,4 @@
 pycryptodome
 git+https://github.com/vphpersson/pyutils.git#egg=pyutils
+git+https://github.com/vphpersson/string_utils_py.git#egg=string_utils_py
 git+https://github.com/vphpersson/ndr.git#egg=ndr
