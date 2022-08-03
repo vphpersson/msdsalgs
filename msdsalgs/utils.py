@@ -5,7 +5,7 @@ from enum import IntFlag
 from re import sub as re_sub
 from abc import ABC
 
-from pyutils.my_string import to_snake_case
+from string_utils_py import to_snake_case
 
 
 class Mask(ABC):
